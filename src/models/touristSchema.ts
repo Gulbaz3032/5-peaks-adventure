@@ -2,56 +2,74 @@ import express from "express";
 import mongoose from "mongoose";
 
 export interface ITourists extends Document {
-    name: string;
-    email: string;
-    password: string;
-    country: string;
-    gender: "male" | "female" | "others";
-    type: "international" | "local";
-    status: "active" | "inactive";
-    date: Date;
+  name: string;
+  email: string;
+  password: string;
+  country: string;
+  gender: "male" | "female" | "others";
+  type: "international" | "local";
+  status: "active" | "inactive";
+  date: Date;
+  resetOtp: string | null;
+  resetOtpExpires: Date | null;
+  isOtpVerified: boolean;
 }
 
-const touristSchema = new mongoose.Schema<ITourists>({
+const touristSchema = new mongoose.Schema<ITourists>(
+  {
     name: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     email: {
-        type: String,
-        required: true,
-        unique: true
+      type: String,
+      required: true,
+      unique: true,
     },
     password: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     country: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     gender: {
-        type: String,
-        enum: ["male", "female", "others"],
-        required: true
+      type: String,
+      enum: ["male", "female", "others"],
+      required: true,
     },
     type: {
-        type: String,
-        enum: ["international", "local"],
-        required: true
+      type: String,
+      enum: ["international", "local"],
+      required: true,
     },
     status: {
-        type: String,
-        enum: ["active", "inactive"],
-        default: "inactive"
+      type: String,
+      enum: ["active", "inactive"],
+      default: "inactive",
     },
     date: {
-        type: Date,
-        default: Date.now
-    }
-}, {
-    timestamps: true
-});
+      type: Date,
+      default: Date.now,
+    },
+    resetOtp: {
+      type: String,
+      default: null,
+    },
+    resetOtpExpires: {
+      type: Date,
+      default: null,
+    },
+    isOtpVerified: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
- const touristModel = mongoose.model<ITourists>("Tourist", touristSchema);
- export default touristModel;
+const touristModel = mongoose.model<ITourists>("Tourist", touristSchema);
+export default touristModel;

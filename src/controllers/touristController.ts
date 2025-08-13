@@ -5,6 +5,7 @@ import { ITourists } from "../models/touristSchema"
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 dotenv.config();
 
 
@@ -78,3 +79,101 @@ export const getTourist = async (req: Request, res: Response) => {
     }
 }
 
+export const getSingleTourist = async (req: Request, res: Response) => {
+    try {
+        const touristId = req.params.id;
+        const tourist = await touristModel.findById(touristId);
+        if(!tourist) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        return res.status(200).json({
+            message: "Successfully retrived the user",
+            tourist
+        });
+
+    } catch (error : any) {
+        console.log("faild to get single user server error ", error );
+        return res.status(500).json({
+            message: "Failed to get single user server error",
+            error: error.message
+        });
+    }
+}
+
+export const updateTourist = async (req: Request, res: Response) => {
+    try {
+        const touristId = req.params.id;
+
+        if (!mongoose.Types.ObjectId.isValid(touristId)) {
+            return res.status(400).json({
+                message: "Invalid Tourist id"
+            });
+        }
+
+        const { name, email, password, country, gender, type, status, date } = req.body;
+        const updateFields: any = {};
+
+        if (name) updateFields.name = name;
+        if (email) updateFields.email = email;
+        if (password) {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            updateFields.password = hashedPassword;
+        }
+        if (country) updateFields.country = country;
+        if (gender) updateFields.gender = gender;
+        if (type) updateFields.type = type;
+        if (status) updateFields.status = status;
+        if (date) updateFields.date = date; 
+
+        const updateTourist = await touristModel.findByIdAndUpdate(
+            touristId,
+            updateFields,
+            { new: true }
+        );
+
+        if (!updateTourist) {
+            return res.status(400).json({
+                message: "Failed to update the user"
+            });
+        }
+
+        return res.status(200).json({
+            message: "Updated successfully",
+            updateTourist
+        });
+
+    } catch (error: any) {
+        console.error("Failed to update the user, Server error:", error);
+        return res.status(500).json({
+            message: "Failed to update the tourist, server error",
+            error: error.message
+        });
+    }
+};
+
+export const deleteTourist = async (req: Request, res: Response) => {
+    try {
+        const touristId = req.params.id;
+        const tourist = await touristModel.findByIdAndDelete(touristId);
+        if(!tourist) {
+            return res.status(404).json({
+                message: "Tourist not found"
+            });
+        }
+
+        return res.status(200).json({
+            message: "User delete successfully",
+            tourist
+        });
+
+    } catch (error: any) {
+        console.log("Failed to delete, Server error", error);
+        return res.status(500).json({
+            message: "Failed to delete the user, Server error",
+            error: error.message
+        });
+    }
+}
