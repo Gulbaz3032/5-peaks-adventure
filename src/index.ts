@@ -5,6 +5,7 @@
     import dashboardRoutes from "./routes/dashboardRoutes";
     // import touristToutes from "./routes/touristRoutes";
     import touristRoutes from "./routes/touristRoutes";
+    import adminRoutes from "./routes/adminRoutes";
 
     dbConnect();
     const app = express();
@@ -13,7 +14,10 @@
     const PORT = process.env.PORT as string;
 
     app.use("/api/dashboard", dashboardRoutes);
+
     app.use("/api/tourist", touristRoutes);
+
+    app.use("/api/admin", adminRoutes);
 
 
 

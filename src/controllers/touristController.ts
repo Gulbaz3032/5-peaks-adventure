@@ -2,6 +2,7 @@ import express from "express";
 import { Request, Response } from "express";
 import touristModel from "../models/touristSchema";
 import { ITourists } from "../models/touristSchema"
+import { transporter } from "../utils/emailSender";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
@@ -29,7 +30,7 @@ export const registerTourist = async (req: Request, res: Response) => {
 
         const newUser = new touristModel(
             {
-                name, 
+            name, 
             email,
             password: hashedPassword,
             country,
@@ -177,3 +178,143 @@ export const deleteTourist = async (req: Request, res: Response) => {
         });
     }
 }
+
+export const loginTourist = async (req: Request, res: Response) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({
+                message: "Email and password are required"
+            });
+        }
+
+        const tourist = await touristModel.findOne({ email });
+        if (!tourist) {
+            return res.status(404).json({
+                message: "User not found with this email"
+            });
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, tourist.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({
+                message: "Invalid password"
+            });
+        }
+
+        const token = jwt.sign(
+            { userId: tourist._id, email: tourist.email }, 
+            process.env.JWT_SECRET as string,
+            { expiresIn: "5h" }
+        );
+
+        return res.status(200).json({
+            message: "Login successful",
+            token, 
+            tourist
+        });
+
+    } catch (error: any) {
+        console.error("Failed to login, server error:", error);
+        return res.status(500).json({
+            message: "Failed to login. Server error.",
+            error: error.message
+        });
+    }
+};
+
+export const forgetPassword = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.body;
+        const user = await touristModel.findOne({ email });
+
+        if(!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expire = new Date(Date.now() + 10 * 60  * 1000 ) // which means otp is for 10min
+        
+        user.resetOtp = otp;
+        user.resetOtpExpires = expire;
+        await  user.save();
+
+        await transporter.sendMail({
+            to: email,
+            subject: "Password Reset OTP",
+            text: `YOUR OTP IS ${otp}`,
+        });
+
+        return res.status(200).json({
+            message: "OTP is successfully sent to your email"
+        });
+
+    } catch (error : any) {
+        console.log("Failed to forget password, server error", error);
+        return res.status(500).json({
+            message: "Faild to forget password, Server error",
+            error: error.message
+        });
+    }
+}
+
+export const verifyOtp = async (req: Request, res: Response) => {
+    try{
+        const { email, otp } = req.body;
+        const user = await touristModel.findOne({ email });
+        if(!user || user.resetOtp !== otp) {
+            return res.status(400).json({
+                message: "Invalid OTP"
+            });
+        }
+
+        user.isOtpVerified = true;
+        user.resetOtp = null;
+        user.resetOtpExpires = null;
+
+        await user.save();
+
+        return res.status(200).json({
+            message: "Successfully verify the otp",
+        });
+
+
+    } catch (error: any) {
+        console.log("Failed to verfiyOTP, server error", error);
+        return res.status(500).json({
+            message: "Failed to verfiyOTP, server error",
+            error: error.message
+        });
+    }
+}
+
+export const resetPassword = async (req: Request, res: Response) => {
+    try {
+        const { email, newPassword } = req.body;
+        const user = await touristModel.findOne({ email });
+        if(!user || !user.isOtpVerified) {
+            return res.status(404).json({
+                messsage: "OTP verification required"
+            });
+        }
+
+        user.password = await bcrypt.hash(newPassword, 10);
+        user.isOtpVerified = false;
+    await user.save();
+
+    return res.status(200).json({
+      message: "Password Reset Successfully"
+    });
+
+    } catch (error : any) {
+        console.log("Failed to reset password, server error", error);
+        return res.status(500).json({
+            message: "Failed to reset password, Server error",
+            error: error.message
+        });
+    }
+}
+
