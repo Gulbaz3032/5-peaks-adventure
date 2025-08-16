@@ -16,7 +16,7 @@ const router = express.Router();
 router.post("/register-tourist", registerTourist);
 router.post("/login", loginTourist);
 router.post("/forget-password", forgetPassword);
-router.post("/verity-otp", verifyOtp);
+router.post("/verify-otp", verifyOtp);
 router.post("/reset-password", resetPassword);
 router.get("/gettourist", getTourist);
 router.get("/gitsingletourist/:id", getSingleTourist);

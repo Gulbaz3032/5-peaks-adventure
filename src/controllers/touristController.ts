@@ -265,11 +265,10 @@ export const verifyOtp = async (req: Request, res: Response) => {
     try{
         const { email, otp } = req.body;
         const user = await touristModel.findOne({ email });
-        if(!user || user.resetOtp !== otp) {
-            return res.status(400).json({
-                message: "Invalid OTP"
-            });
-        }
+       if (!user || user.resetOtp !== String(otp)) {
+    return res.status(400).json({ message: "Invalid OTP" });
+}
+
 
         user.isOtpVerified = true;
         user.resetOtp = null;
