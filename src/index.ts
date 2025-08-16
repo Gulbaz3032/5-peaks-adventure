@@ -7,6 +7,7 @@
     import touristRoutes from "./routes/touristRoutes";
     import adminRoutes from "./routes/adminRoutes";
     import adminPersonRoutes from "./routes/adminPersonRoutes"
+    import caseController from "./routes/caseRoutes"
 
     dbConnect();
     const app = express();
@@ -21,6 +22,8 @@
     app.use("/api/admin", adminRoutes);
 
     app.use("/api/admin-person", adminPersonRoutes);
+
+    app.use("/api/case", caseController);
 
 
 
